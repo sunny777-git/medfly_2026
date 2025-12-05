@@ -1,0 +1,2 @@
+alembic revision --autogenerate -m "Add parent_id column to Hospital table"
+alembic upgrade head

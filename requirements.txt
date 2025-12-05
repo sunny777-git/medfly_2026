@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+requests
+redis
+rq
+boto3
+supabase
+python-multipart
+aiofiles
+python-socketio[asyncio_client]
+python-socketio[asyncio_server]
+python-engineio[asyncio]

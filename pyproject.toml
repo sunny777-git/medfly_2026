@@ -1,0 +1,60 @@
+[tool.poetry]
+name = "fastapi-medly"
+version = "1.0"
+description = "Medfly 1.0"
+authors = ["Sunny"]
+readme = "README.md"
+
+# Tell Poetry where your code lives
+packages = [
+    { include = "app" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+# Core API
+fastapi = "^0.115.1"
+uvicorn = { extras = ["standard"], version = "^0.35.0" }
+
+# Database
+sqlalchemy = "^2.0.41"
+psycopg2-binary = "^2.9.11"
+alembic = "^1.16.2"
+
+# Auth & Security
+passlib = "^1.7.4"
+bcrypt = "^4.3.0"
+python-jose = "^3.5.0"
+jwt = "^1.4.0"
+python-dotenv = "^1.1.1"
+
+# Pydantic
+pydantic = "^2.11.7"
+
+# Async File Uploads
+python-multipart = "^0.0.9"
+aiofiles = "^23.2.1"
+
+# Socket.IO
+python-socketio = { extras = ["asyncio_client", "asyncio_server"], version = "^5.15.0" }
+python-engineio = { extras = ["asyncio"], version = "^4.9.2" }
+
+# Background tasks
+redis = "^5.0.4"
+rq = "^1.15.1"
+
+# Supabase upload / HTTP / AWS / Templates
+supabase = "^1.2.0"
+requests = "^2.32.5"
+boto3 = "^1.42.3"
+jinja2 = "^3.1.6"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.11.0"
+isort = "^6.1.0"
+pytest = "^8.4.2"
+
+[tool.poetry.scripts]
+start-api = "app.main:run_api"
+start-sio = "app.socket_server:run_sio"
