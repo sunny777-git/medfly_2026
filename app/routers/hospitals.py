@@ -32,3 +32,20 @@ def get_hospital(hospital_id: int, db: Session = Depends(get_db), current_user: 
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital not found")
     return hospital
+
+@router.get("/{hospital_id}/branches", response_model=List[HospitalResponse])
+def get_hospital_branches(
+    hospital_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Return all branches whose parent_id = hospital_id.
+    This assumes hospital_id is the HQ / parent hospital.
+    """
+    # Optional safety: ensure parent hospital exists
+    parent = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    if not parent:
+        raise HTTPException(status_code=404, detail="Parent hospital not found")
+
+    branches = db.query(Hospital).filter(Hospital.parent_id == hospital_id).all()
+    return branches

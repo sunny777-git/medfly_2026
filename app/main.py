@@ -20,6 +20,7 @@ from app.routers import (
     roles,
     procedures,
     snapshots,
+    dashboard,        
 )
 
 import uvicorn
@@ -110,6 +111,7 @@ app.include_router(patient_registration.router, prefix="/api", tags=["Patients"]
 app.include_router(turnservers.router, prefix="/api", tags=["IceServers"])
 app.include_router(snapshots.router, prefix="/api", tags=["Snapshots"])
 app.include_router(recordings.router, prefix="/api", tags=["Recordings"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]) 
 
 
 @app.get("/")
