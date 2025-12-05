@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date as dt_date, datetime
 from typing import Generic, List, TypeVar
 from pydantic.generics import GenericModel
 
 T = TypeVar("T")
+
 
 class HospitalBase(BaseModel):
     name: str
@@ -17,7 +18,7 @@ class HospitalBase(BaseModel):
     owner_name: str
     logo: Optional[str] = None
     account_type: Optional[str] = 'Demo'
-    account_start_date: Optional[date] = date.today()
+    account_start_date: Optional[dt_date] = dt_date.today()
     account_expiry_date: Optional[str] = None
     installation_date: Optional[str] = None
     admin_username: Optional[str] = None
@@ -35,17 +36,19 @@ class HospitalBase(BaseModel):
     status: Optional[str] = 'Active'
     prefix: Optional[str] = 'MEDF'
     total_patients: Optional[int] = 0
-    parent_id: Optional[int] = None #new
+    parent_id: Optional[int] = None
 
 
 class HospitalCreate(HospitalBase):
     pass
+
 
 class HospitalResponse(HospitalBase):
     id: int
 
     class Config:
         orm_mode = True
+
 
 class Hospital(HospitalBase):
     id: int
@@ -76,7 +79,8 @@ class DeviceListResponse(BaseModel):
     limit: int
     offset: int
     devices: List[Device]
-    
+
+
 class DepartmentBase(BaseModel):
     hospital_id: int
     name: str
@@ -214,7 +218,7 @@ class PatientInfoBase(BaseModel):
     alt_id: Optional[str] = "--"
     registered_on: str
     total_visits: Optional[int] = 1
-    entry_date: Optional[date] = date.today()
+    entry_date: Optional[dt_date] = dt_date.today()
 
 
 class PatientInfoCreate(PatientInfoBase):
@@ -227,6 +231,10 @@ class PatientInfo(PatientInfoBase):
     class Config:
         from_attributes = True
 
+
+# -----------------------------------------------------------
+# FIXED PatientRegistration Section
+# -----------------------------------------------------------
 
 class PatientRegistrationBase(BaseModel):
     hospital_id: int
@@ -243,12 +251,19 @@ class PatientRegistrationBase(BaseModel):
     nurse_id: Optional[str] = "--"
     nurse_name: Optional[str] = "--"
     status: Optional[str] = "--"
-    date: str
+
+    # API field "date" maps DB "procedure_date"
+    date: Optional[str] = Field(None, alias="procedure_date")
+
     activity_status: Optional[str] = "1"
-    activity_date: str
-    activity_log: Optional[str] = ''
-    entry_date: Optional[date] = date.today()
+    activity_date: Optional[str] = None
+    activity_log: Optional[str] = ""
+    entry_date: Optional[dt_date] = dt_date.today()
     visit_id: Optional[int] = 1
+
+    class Config:
+        from_attributes = True
+        allow_population_by_field_name = True
 
 
 class PatientRegistrationCreate(BaseModel):
@@ -265,22 +280,25 @@ class PatientRegistrationCreate(BaseModel):
     nurse_id: Optional[str] = "--"
     nurse_name: Optional[str] = "--"
     status: Optional[str] = "--"
-    date: str
-    # hospital_id intentionally NOT here – set from current_user
-
+    date: str   # input field (will be mapped to procedure_date)
 
 
 class PatientRegistration(PatientRegistrationBase):
     id: int
+
     class Config:
         from_attributes = True
+        allow_population_by_field_name = True
 
+
+# -----------------------------------------------------------
 
 class PaginatedResponse(GenericModel, Generic[T]):
     total: int
     limit: int
     offset: int
     items: List[T]
+
 
 class SnapshotsBase(BaseModel):
     hospital_id: int
@@ -294,16 +312,17 @@ class SnapshotsBase(BaseModel):
     file_status: Optional[str] = "main"
     annotation_data: Optional[str] = ""
 
+
 class SnapshotsCreate(SnapshotsBase):
-    Img: str  # Base64 snapshot from UI
+    Img: str
     filename: Optional[str] = None
+
 
 class Snapshots(SnapshotsBase):
     id: int
 
     class Config:
         orm_mode = True
-
 
 
 class MenuItemBase(BaseModel):
@@ -345,12 +364,14 @@ class RoleBasedMenu(RoleBasedMenuBase):
 
 
 class IceServerBase(BaseModel):
-    urls: str  # e.g., "stun:stun.l.google.com:19302,turn:turn.example.com:3478"
+    urls: str
     username: Optional[str] = None
     credential: Optional[str] = None
 
+
 class IceServerCreate(IceServerBase):
     pass
+
 
 class IceServer(IceServerBase):
     id: int
@@ -358,7 +379,6 @@ class IceServer(IceServerBase):
     class Config:
         orm_mode = True
 
-# app/schemas/all.py
 
 class IceServerPublic(BaseModel):
     id: int
@@ -369,13 +389,15 @@ class IceServerPublic(BaseModel):
         orm_mode = True
 
 
+# ---------------------------------------------------
+# USERS
+# ---------------------------------------------------
 
-
-# Base fields common across use cases
 class UserBase(BaseModel):
     hspId: Optional[str]
     fullname: str
     mobile: str
+    login_name: Optional[str] = None
     roleId: Optional[int]
     role_name: Optional[str]
     department: Optional[int]
@@ -389,22 +411,22 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
     last_logout: Optional[datetime]
 
-# ✅ Used for creating user in admin dashboard (without password)
+
 class UserCreateAdmin(UserBase):
     pass
 
-# ✅ Used for registration (includes password)
+
 class UserRegister(BaseModel):
     fullname: str
     mobile: str
     password: str
 
-# ✅ Used for login
+
 class UserLogin(BaseModel):
-    mobile: str
+    login_name: str
     password: str
 
-# ✅ Used for reading full user details
+
 class UserResponse(UserBase):
     id: int
     date_joined: datetime
@@ -412,7 +434,7 @@ class UserResponse(UserBase):
     class Config:
         orm_mode = True
 
-# ✅ Optional: basic user info
+
 class UserRead(BaseModel):
     id: int
     fullname: str

@@ -225,6 +225,8 @@ class User(Base):
     hspId = Column(String(50), nullable=True)
     fullname = Column(String(100), nullable=False)
     mobile = Column(String(50), unique=True, nullable=False)
+    # ✅ NEW: login_name for username-like login (e.g., APLH001)
+    login_name = Column(String(50), unique=True, nullable=True, index=True)
     roleId = Column(Integer, nullable=True)
     role_name = Column(String(50), nullable=True)
     department = Column(Integer, nullable=True)
@@ -238,6 +240,6 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     date_joined = Column(DateTime, default=datetime.utcnow)
     last_logout = Column(DateTime, nullable=True)
-    # app/models/all_models.py (add inside User class)
     hashed_password = Column(String(200), nullable=True)
+
    

@@ -4,6 +4,7 @@ poetry run uvicorn app.main:app --reload
 alembic revision --autogenerate -m "Initial migration"
 alembic revision --autogenerate -m "Add new table or update schema"
 alembic revision --autogenerate -m "Add hashed_password to users"
+alembic revision --autogenerate -m "added login_name in user table migration"
 alembic upgrade head
 
 

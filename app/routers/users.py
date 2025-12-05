@@ -2,22 +2,26 @@
 
 import os
 from fastapi import APIRouter, Depends, HTTPException
-import jwt
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
+
 from app.models.database import SessionLocal
 from app.models.all_models import User
 from app.schemas.all import UserLogin, UserRegister
 from app.utils.security import hash_password, verify_password, create_access_token
 from app.utils.deps import get_db, system_admin_required
-from jose import jwt, JWTError
 
 router = APIRouter()
 
 
-
 @router.post("/login")
 def login(payload: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.mobile == payload.mobile).first()
+    """
+    Login using login_name + password.
+    For hospital admins this will be the generated ID (e.g., APLH001).
+    """
+
+    user = db.query(User).filter(User.login_name == payload.login_name).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -30,16 +34,27 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
 
 @router.post("/register")
 def register_user(payload: UserRegister, db: Session = Depends(get_db)):
+    """
+    Public/normal user registration.
+    - mobile is still required
+    - login_name defaults to mobile (so they can log in with mobile as username)
+    """
+
     # Check if mobile already exists
     existing_user = db.query(User).filter(User.mobile == payload.mobile).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Mobile number already registered")
 
-    # Create new user
+    # Also ensure login_name (mobile) isn't already taken
+    existing_login = db.query(User).filter(User.login_name == payload.mobile).first()
+    if existing_login:
+        raise HTTPException(status_code=400, detail="Login name already taken")
+
     new_user = User(
         fullname=payload.fullname,
         mobile=payload.mobile,
-        show_pwd=hash_password(payload.password),  # bcrypt hash
+        login_name=payload.mobile,                 # ✅ login with mobile
+        show_pwd=hash_password(payload.password), # bcrypt hash
         is_active=True
     )
 
@@ -56,10 +71,12 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
 def login_required(user: User = Depends(system_admin_required)) -> User:
     return user
 
+
 @router.get("/user_profile")
 def read_users_me(current_user: User = Depends(system_admin_required)):
     return {
         "id": current_user.id,
         "fullname": current_user.fullname,
         "mobile": current_user.mobile,
+        "login_name": current_user.login_name,
     }

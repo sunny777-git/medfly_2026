@@ -11,6 +11,7 @@ from app.models.all_models import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -18,14 +19,15 @@ def get_db():
     finally:
         db.close()
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     credentials_exception = HTTPException(status_code=401, detail="Invalid token")
 
     try:
         payload = jwt.decode(
             token,
             os.getenv("SECRET_KEY"),
-            algorithms=[os.getenv("ALGORITHM")]
+            algorithms=[os.getenv("ALGORITHM")],
         )
         user_id = payload.get("sub")
         if user_id is None:
@@ -34,15 +36,28 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
 
     db = SessionLocal()
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    db.close()
+    try:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+    finally:
+        db.close()
 
     if user is None:
         raise credentials_exception
 
     return user
 
-def system_admin_required(user: User = Depends(get_current_user)):
+
+def system_admin_required(user: User = Depends(get_current_user)) -> User:
     if not user.is_sadmin:
         raise HTTPException(status_code=403, detail="System admin access only")
+    return user
+
+
+# ✅ NEW: allow both system admin OR hospital admin
+def hospital_or_system_admin_required(user: User = Depends(get_current_user)) -> User:
+    if not (user.is_sadmin or user.is_hadmin):
+        raise HTTPException(
+            status_code=403,
+            detail="Hospital or system admin access only",
+        )
     return user
