@@ -5,7 +5,7 @@ from typing import List, Optional
 from app.models.database import get_db
 from app.models import all_models as models
 from app.schemas import all as schemas
-from app.routers.users import get_current_user
+from app.utils.deps import  system_admin_required
 from app.models.all_models import User  # or use models.User below
 
 router = APIRouter()
@@ -38,7 +38,7 @@ def get_patient_registrations(
 def create_patient_registration(
     registration: schemas.PatientRegistrationCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(system_admin_required),
 ):
     # Always tie registration to the current user's branch
     if not current_user.hspId:
