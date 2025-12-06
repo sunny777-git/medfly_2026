@@ -171,3 +171,63 @@ def get_patients(
         offset=offset,
         items=items,
     )
+
+
+
+@router.get("/patient-record/{mf_id}")
+def get_patient_record(
+    mf_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(hospital_or_system_admin_required)
+):
+
+    # ---------------------------------------------------------
+    # 1️⃣ Fetch PatientInfo depending on user type
+    # ---------------------------------------------------------
+
+    # SUPER ADMIN → unrestricted access
+    if current_user.is_sadmin:
+        pinfo = (
+            db.query(models.PatientInfo)
+            .filter(models.PatientInfo.mf_id == mf_id)
+            .first()
+        )
+    else:
+        # HOSPITAL/BRANCH ADMIN → only their branch/hospital
+        pinfo = (
+            db.query(models.PatientInfo)
+            .filter(
+                models.PatientInfo.mf_id == mf_id,
+                models.PatientInfo.hospital_id == int(current_user.hspId)
+            )
+            .first()
+        )
+
+    if not pinfo:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    # ---------------------------------------------------------
+    # 2️⃣ Fetch PatientRegistration (list) with restrictions
+    # ---------------------------------------------------------
+
+    regs_query = (
+        db.query(models.PatientRegistration)
+        .filter(models.PatientRegistration.mf_id == mf_id)
+    )
+
+    # For branch/hospital admin, restrict to THIS hospital only
+    if not current_user.is_sadmin:
+        regs_query = regs_query.filter(
+            models.PatientRegistration.hospital_id == int(current_user.hspId)
+        )
+
+    regs = regs_query.order_by(models.PatientRegistration.id.desc()).all()
+
+    # ---------------------------------------------------------
+    # 3️⃣ Return combined record
+    # ---------------------------------------------------------
+
+    return {
+        "patient": pinfo,
+        "registrations": regs
+    }
