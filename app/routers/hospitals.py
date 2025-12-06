@@ -90,3 +90,6 @@ def get_hospital(
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital not found")
     return hospital
+
+
+
