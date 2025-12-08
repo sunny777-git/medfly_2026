@@ -25,11 +25,18 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not verify_password(payload.password, user.show_pwd):
-        raise HTTPException(status_code=400, detail="Incorrect password")
+    # ✅ Prefer hashed_password
+    if user.hashed_password:
+        if not verify_password(payload.password, user.hashed_password):
+            raise HTTPException(status_code=400, detail="Incorrect password")
+    else:
+        # Optional: for old data where hash was incorrectly stored in show_pwd
+        if not user.show_pwd or not verify_password(payload.password, user.show_pwd):
+            raise HTTPException(status_code=400, detail="Incorrect password")
 
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
+
 
 
 @router.post("/register")
@@ -50,12 +57,18 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
     if existing_login:
         raise HTTPException(status_code=400, detail="Login name already taken")
 
+    plain_password = payload.password
+
     new_user = User(
         fullname=payload.fullname,
         mobile=payload.mobile,
-        login_name=payload.mobile,                 # ✅ login with mobile
-        show_pwd=hash_password(payload.password), # bcrypt hash
-        is_active=True
+        login_name=payload.login_name,                    # login with mobile
+        show_pwd=plain_password,                      # ✅ raw password stored
+        hashed_password=hash_password(plain_password),# ✅ hashed value
+        is_active=True,
+        active=True,                                  # if you want both
+        is_hadmin=True,
+        is_sadmin=False,
     )
 
     db.add(new_user)
@@ -66,6 +79,7 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db)):
         "message": "User registered successfully",
         "user_id": new_user.id
     }
+
 
 
 def login_required(user: User = Depends(system_admin_required)) -> User:

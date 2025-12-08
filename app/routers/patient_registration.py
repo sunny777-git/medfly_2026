@@ -31,7 +31,7 @@ def get_patient_registrations(
     if hospid:
         query = query.filter(models.PatientRegistration.hospital_id == hospid)
     if mfid:
-        query = query.filter(models.PatientRegistration.mf_id == mfid)
+        query = query.filter(models.PatientRegistration.uid == mfid)
 
     total = query.count()
     results = query.offset(offset).limit(limit).all()
@@ -69,9 +69,9 @@ def create_patient_registration(
     # -----------------------------------------------
     # 2️⃣ Extract patient fields for patient_info
     # -----------------------------------------------
-    mf_id = data.get("mf_id")
-    if not mf_id:
-        raise HTTPException(status_code=400, detail="mf_id is required")
+    uid = data.get("uid")
+    if not uid:
+        raise HTTPException(status_code=400, detail="uid is required")
 
     alt_id = data.get("alt_id") or "--"
     name = data.get("name")            # patient name from frontend
@@ -85,7 +85,7 @@ def create_patient_registration(
     pinfo = (
         db.query(models.PatientInfo)
         .filter(
-            models.PatientInfo.mf_id == mf_id,
+            models.PatientInfo.uid == uid,
             models.PatientInfo.hospital_id == hospital_id,
         )
         .first()
@@ -117,7 +117,7 @@ def create_patient_registration(
 
         pinfo = models.PatientInfo(
             hospital_id=hospital_id,
-            mf_id=mf_id,
+            uid=uid,
             alt_id=alt_id,
             name=name or "",
             mobile=mobile or "",
@@ -221,7 +221,7 @@ def find_patients(
         db.query(models.PatientRegistration, models.PatientInfo)
         .join(
             models.PatientInfo,
-            models.PatientInfo.mf_id == models.PatientRegistration.mf_id,
+            models.PatientInfo.uid == models.PatientRegistration.uid,
             isouter=True,
         )
     )
@@ -236,7 +236,7 @@ def find_patients(
 
     # Filters
     if mfid:
-        query = query.filter(models.PatientRegistration.mf_id == mfid)
+        query = query.filter(models.PatientRegistration.uid == mfid)
 
     if alt_id:
         query = query.filter(models.PatientRegistration.alt_id == alt_id)
@@ -265,7 +265,7 @@ def find_patients(
             {
                 "Registration_Id": reg.id,
                 "Hospital_Id": reg.hospital_id,
-                "Mf_Id": reg.mf_id,
+                "uid": reg.uid,
                 "Alt_Id": reg.alt_id,
                 "Status": reg.status,
                 "Procedure_Name": reg.procedure_name,
@@ -311,7 +311,7 @@ def get_patient_visits(
     """
 
     # 1️⃣ Patient master
-    pinfo_query = db.query(models.PatientInfo).filter(models.PatientInfo.mf_id == mfid)
+    pinfo_query = db.query(models.PatientInfo).filter(models.PatientInfo.uid == mfid)
 
     if not current_user.is_sadmin:
         pinfo_query = pinfo_query.filter(
@@ -324,7 +324,7 @@ def get_patient_visits(
 
     # 2️⃣ All registrations (visits)
     regs_query = db.query(models.PatientRegistration).filter(
-        models.PatientRegistration.mf_id == mfid
+        models.PatientRegistration.uid == mfid
     )
 
     if not current_user.is_sadmin:
@@ -360,7 +360,7 @@ def get_patient_visits(
 
     patient_obj = {
         "Hospital_Id": pinfo.hospital_id,
-        "Mf_Id": pinfo.mf_id,
+        "uid": pinfo.uid,
         "Alt_Id": pinfo.alt_id,
         "Name": pinfo.name,
         "Mobile": pinfo.mobile,

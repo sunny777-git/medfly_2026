@@ -21,9 +21,8 @@ class HospitalBase(BaseModel):
     account_start_date: Optional[dt_date] = dt_date.today()
     account_expiry_date: Optional[str] = None
     installation_date: Optional[str] = None
-    admin_username: Optional[str] = None
-    owner_username: Optional[str] = 'Medfly@admin'
-    owner_password: Optional[str] = 'Medyadmin'
+    login_name: Optional[str] = None
+    login_password: Optional[str] = None
     quoted: Optional[str] = None
     final_cost: Optional[str] = None
     payment_mode: Optional[str] = None
@@ -45,9 +44,9 @@ class HospitalCreate(HospitalBase):
 
 class HospitalResponse(HospitalBase):
     id: int
-
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Hospital(HospitalBase):
@@ -181,7 +180,7 @@ class Parameter(ParameterBase):
 
 class ReportBase(BaseModel):
     hospital_id: int
-    mf_id: str
+    uid: str
     doctor_id: int
     doctor_name: str
     name: str
@@ -210,7 +209,7 @@ class Report(ReportBase):
 
 class PatientInfoBase(BaseModel):
     hospital_id: int
-    mf_id: str
+    uid: str
     name: str
     mobile: str
     age: int
@@ -238,7 +237,7 @@ class PatientInfo(PatientInfoBase):
 
 class PatientRegistrationBase(BaseModel):
     hospital_id: int
-    mf_id: str
+    uid: str
     alt_id: Optional[str] = "--"
     procedure_id: int
     procedure_name: str
@@ -263,11 +262,11 @@ class PatientRegistrationBase(BaseModel):
 
     class Config:
         from_attributes = True
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 
 class PatientRegistrationCreate(BaseModel):
-    mf_id: str
+    uid: str
     alt_id: Optional[str] = "--"
     procedure_id: int
     procedure_name: str
@@ -288,7 +287,7 @@ class PatientRegistration(PatientRegistrationBase):
 
     class Config:
         from_attributes = True
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 
 # -----------------------------------------------------------
@@ -302,7 +301,7 @@ class PaginatedResponse(GenericModel, Generic[T]):
 
 class SnapshotsBase(BaseModel):
     hospital_id: int
-    mf_id: str
+    uid: str
     visit_id: int
     procedure_id: int
     procedure_datetime: str
@@ -322,7 +321,7 @@ class Snapshots(SnapshotsBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MenuItemBase(BaseModel):
@@ -377,7 +376,7 @@ class IceServer(IceServerBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class IceServerPublic(BaseModel):
@@ -386,7 +385,7 @@ class IceServerPublic(BaseModel):
     username: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------------------------------------------------
@@ -419,6 +418,7 @@ class UserCreateAdmin(UserBase):
 class UserRegister(BaseModel):
     fullname: str
     mobile: str
+    login_name: str
     password: str
 
 
@@ -432,7 +432,7 @@ class UserResponse(UserBase):
     date_joined: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserRead(BaseModel):
@@ -441,4 +441,4 @@ class UserRead(BaseModel):
     mobile: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True

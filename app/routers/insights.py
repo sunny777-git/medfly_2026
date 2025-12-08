@@ -33,10 +33,10 @@ def business_dates_filter(
     result = []
 
     for pr in pr_data:
-        pat = db.query(models.PatientInfo).filter_by(mf_id=pr.mf_id).first()
+        pat = db.query(models.PatientInfo).filter_by(uid=pr.uid).first()
         if pat:
             result.append({
-                "Mf_Id": pat.mf_id,
+                "uid": pat.uid,
                 "Patient_Name": pat.name,
                 "Alt_Id": pat.alt_id,
                 "Mobile": pat.mobile,
@@ -89,17 +89,17 @@ def get_user_based_data(
     for reg in registrations:
         pinfo = db.query(models.PatientInfo).filter_by(
             hospital_id=hospid,
-            mf_id=reg.mf_id
+            uid=reg.uid
         ).first()
         if pinfo:
             patientinfo_data.append({
-                "Mf_Id": pinfo.mf_id,
+                "uid": pinfo.uid,
                 "Patient_Name": pinfo.name,
                 "Mobile": pinfo.mobile
             })
 
         patientreg_data.append({
-            "Mf_Id": reg.mf_id,
+            "uid": reg.uid,
             "Alt_Id": reg.alt_id,
             "Reg_Date": reg.entry_date,
             "Referrer_Name": reg.referrer_name,

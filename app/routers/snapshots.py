@@ -26,7 +26,7 @@ def upload_snapshot_base64(
 ):
     try:
         hospital_id = payload.get("hospital_id")
-        mf_id = payload.get("mf_id")
+        uid = payload.get("uid")
         visit_id = payload.get("visit_id")
         procedure_id = payload.get("procedure_id", 0)
         procedure_datetime = payload.get("procedure_datetime") or datetime.utcnow().isoformat()
@@ -52,7 +52,7 @@ def upload_snapshot_base64(
 
         new_snapshot = models.Snapshots(
             hospital_id=hospital_id,
-            mf_id=mf_id,
+            uid=uid,
             visit_id=visit_id,
             procedure_id=procedure_id,
             procedure_datetime=procedure_datetime,
@@ -85,7 +85,7 @@ def get_snapshots(
     if hospid:
         query = query.filter(models.Snapshots.hospital_id == hospid)
     if mfid:
-        query = query.filter(models.Snapshots.mf_id == mfid)
+        query = query.filter(models.Snapshots.uid == mfid)
 
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()

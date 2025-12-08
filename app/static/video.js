@@ -37,109 +37,109 @@ loadIceServers();
 
 // to load recorded videos
 async function loadRecordings() {
-    try {
-      const res = await fetch("/api/recordings");
-      const files = await res.json();
-  
-      const container = document.getElementById("recordings");
-      container.innerHTML = "";
-  
-      files.forEach(file => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "recording-wrapper";
-  
-        const video = document.createElement("video");
-        video.controls = true;
-        video.src = `/api/recordings/${file}`;
-        video.className = "recording-video";
-  
-        const overlay = document.createElement("div");
-        overlay.className = "recording-overlay";
-  
-        const delBtn = document.createElement("button");
-        delBtn.className = "overlay-btn";
-        delBtn.innerHTML = `<i class="fas fa-trash"></i>`;
-        delBtn.onclick = () => deleteRecording(file);  // implement this function if not yet
-  
-        const fsBtn = document.createElement("button");
-        fsBtn.className = "overlay-btn";
-        fsBtn.innerHTML = `<i class="fas fa-expand"></i>`;
-        fsBtn.onclick = () => video.requestFullscreen();
-  
-        overlay.appendChild(delBtn);
-        overlay.appendChild(fsBtn);
-        wrapper.appendChild(video);
-        wrapper.appendChild(overlay);
-  
-        container.appendChild(wrapper);
-      });
-    } catch (err) {
-      console.error("❌ Failed to load recordings:", err);
-    }
-  }
-  
+  try {
+    const res = await fetch("/api/recordings");
+    const files = await res.json();
 
-  function deleteRecording(filename) {
-    if (!confirm("Are you sure you want to delete this recording?")) return;
-  
-    fetch(`/api/recordings/${filename}`, {
-      method: "DELETE"
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to delete recording");
-        loadRecordings(); // reload list after delete
-      })
-      .catch(err => {
-        console.error("❌ Could not delete recording:", err);
-        alert("Error deleting recording");
-      });
+    const container = document.getElementById("recordings");
+    container.innerHTML = "";
+
+    files.forEach(file => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "recording-wrapper";
+
+      const video = document.createElement("video");
+      video.controls = true;
+      video.src = `/api/recordings/${file}`;
+      video.className = "recording-video";
+
+      const overlay = document.createElement("div");
+      overlay.className = "recording-overlay";
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "overlay-btn";
+      delBtn.innerHTML = `<i class="fas fa-trash"></i>`;
+      delBtn.onclick = () => deleteRecording(file);  // implement this function if not yet
+
+      const fsBtn = document.createElement("button");
+      fsBtn.className = "overlay-btn";
+      fsBtn.innerHTML = `<i class="fas fa-expand"></i>`;
+      fsBtn.onclick = () => video.requestFullscreen();
+
+      overlay.appendChild(delBtn);
+      overlay.appendChild(fsBtn);
+      wrapper.appendChild(video);
+      wrapper.appendChild(overlay);
+
+      container.appendChild(wrapper);
+    });
+  } catch (err) {
+    console.error("❌ Failed to load recordings:", err);
   }
-  
-  // prepare data for snapshot
-  function uploadSnapshot(base64Img) {
-    const now = new Date();
-    const payload = {
-      hospital_id: 1,
-      mf_id: "default-mf",
-      visit_id: 1,
-      procedure_id: 0,
-      procedure_datetime: now.toISOString(),
-      file_type: "image/png",
-      file_status: "main",
-      annotation_data: "",
-      Img: base64Img,  // base64 image
-      filename: `snapshot_${now.getTime()}.png`  // optional filename
-    };
-  
-    fetch("/api/save-snapshots/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+}
+
+
+function deleteRecording(filename) {
+  if (!confirm("Are you sure you want to delete this recording?")) return;
+
+  fetch(`/api/recordings/${filename}`, {
+    method: "DELETE"
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Failed to delete recording");
+      loadRecordings(); // reload list after delete
     })
-      .then(async res => {
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text);
-        }
-        return res.json();
-      })
-      .then(data => {
-        console.log("📸 Snapshot uploaded:", data);
-        loadSnapshots(); // Refresh sidebar
-      })
-      .catch(err => {
-        console.error("❌ Snapshot upload failed:", err);
-        alert("Snapshot upload failed.");
-      });
-  }
-  
-  
+    .catch(err => {
+      console.error("❌ Could not delete recording:", err);
+      alert("Error deleting recording");
+    });
+}
+
+// prepare data for snapshot
+function uploadSnapshot(base64Img) {
+  const now = new Date();
+  const payload = {
+    hospital_id: 1,
+    uid: "default-mf",
+    visit_id: 1,
+    procedure_id: 0,
+    procedure_datetime: now.toISOString(),
+    file_type: "image/png",
+    file_status: "main",
+    annotation_data: "",
+    Img: base64Img,  // base64 image
+    filename: `snapshot_${now.getTime()}.png`  // optional filename
+  };
+
+  fetch("/api/save-snapshots/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(async res => {
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log("📸 Snapshot uploaded:", data);
+      loadSnapshots(); // Refresh sidebar
+    })
+    .catch(err => {
+      console.error("❌ Snapshot upload failed:", err);
+      alert("Snapshot upload failed.");
+    });
+}
+
+
 /* Document Events */
 document.addEventListener("DOMContentLoaded", () => {
   if (isViewer) {
     socket.emit("join", { room, broadcaster: false });
     socket.emit("viewer_ready", { room });  // emit room to server
-     document.body.classList.add("viewer-only");
+    document.body.classList.add("viewer-only");
   } else {
     const select = document.getElementById("deviceSelect");
     navigator.mediaDevices.enumerateDevices().then(devices => {
@@ -177,7 +177,7 @@ function toggleStream() {
         mediaStream = stream;
         video.srcObject = stream;
         video.controls = false;
-        document.getElementById("generateLinkBtn").disabled = false; 
+        document.getElementById("generateLinkBtn").disabled = false;
         document.getElementById("snapshotBtn").disabled = false;
         document.querySelector('.video-controls').style.display = 'flex';
         document.getElementById("recordBtn").disabled = false;
@@ -265,81 +265,81 @@ function toggleRecording() {
   }
 }
 async function loadSnapshots() {
-    try {
-      const res = await fetch("/api/snapshots/");
-      const data = await res.json();
-  
-      const container = document.getElementById("snapshots");
-      container.innerHTML = "";
-  
-      (data.mediafiles || []).forEach(snapshot => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "snapshot-wrapper";
-  
-        const img = document.createElement("img");
-        img.src = `${location.origin}${snapshot.file_src}`;
-        img.className = "snapshot-img";
-  
-        const overlay = document.createElement("div");
-        overlay.className = "snapshot-overlay";
-  
-        const delBtn = document.createElement("button");
-        delBtn.className = "overlay-btn";
-        delBtn.title = "Delete";
-        delBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
-        delBtn.onclick = () => deleteSnapshot(snapshot.id);
-  
-        const fsBtn = document.createElement("button");
-        fsBtn.className = "overlay-btn";
-        fsBtn.title = "Fullscreen";
-        fsBtn.innerHTML = `<i class="fas fa-expand"></i>`;
-        fsBtn.onclick = () => img.requestFullscreen();
-  
-        overlay.appendChild(delBtn);
-        overlay.appendChild(fsBtn);
-        wrapper.appendChild(img);
-        wrapper.appendChild(overlay);
-        container.appendChild(wrapper);
-      });
-    } catch (err) {
-      console.error("❌ Failed to load snapshots:", err);
-    }
-  }
-  
-  
-  function deleteSnapshot(id) {
-    fetch(`/api/snapshots/?id=${id}`, { method: "DELETE" })
-      .then(res => res.json())
-      .then(data => {
-        console.log("🗑️ Deleted:", data);
-        loadSnapshots();
-      })
-      .catch(err => {
-        console.error("❌ Delete failed:", err);
-        alert("Failed to delete snapshot.");
-      });
-  }
-  
+  try {
+    const res = await fetch("/api/snapshots/");
+    const data = await res.json();
 
-  function captureSnapshot() {
-    const video = document.getElementById("localVideo");
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-  
-    const base64Img = canvas.toDataURL("image/png");
-  
-    // Show in UI
-    const img = document.createElement("img");
-    img.src = base64Img;
-    img.style.width = "100%";
-    document.getElementById("snapshots").prepend(img);
-  
-    // Upload to server
-    uploadSnapshot(base64Img);
+    const container = document.getElementById("snapshots");
+    container.innerHTML = "";
+
+    (data.mediafiles || []).forEach(snapshot => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "snapshot-wrapper";
+
+      const img = document.createElement("img");
+      img.src = `${location.origin}${snapshot.file_src}`;
+      img.className = "snapshot-img";
+
+      const overlay = document.createElement("div");
+      overlay.className = "snapshot-overlay";
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "overlay-btn";
+      delBtn.title = "Delete";
+      delBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
+      delBtn.onclick = () => deleteSnapshot(snapshot.id);
+
+      const fsBtn = document.createElement("button");
+      fsBtn.className = "overlay-btn";
+      fsBtn.title = "Fullscreen";
+      fsBtn.innerHTML = `<i class="fas fa-expand"></i>`;
+      fsBtn.onclick = () => img.requestFullscreen();
+
+      overlay.appendChild(delBtn);
+      overlay.appendChild(fsBtn);
+      wrapper.appendChild(img);
+      wrapper.appendChild(overlay);
+      container.appendChild(wrapper);
+    });
+  } catch (err) {
+    console.error("❌ Failed to load snapshots:", err);
   }
-  
+}
+
+
+function deleteSnapshot(id) {
+  fetch(`/api/snapshots/?id=${id}`, { method: "DELETE" })
+    .then(res => res.json())
+    .then(data => {
+      console.log("🗑️ Deleted:", data);
+      loadSnapshots();
+    })
+    .catch(err => {
+      console.error("❌ Delete failed:", err);
+      alert("Failed to delete snapshot.");
+    });
+}
+
+
+function captureSnapshot() {
+  const video = document.getElementById("localVideo");
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  const base64Img = canvas.toDataURL("image/png");
+
+  // Show in UI
+  const img = document.createElement("img");
+  img.src = base64Img;
+  img.style.width = "100%";
+  document.getElementById("snapshots").prepend(img);
+
+  // Upload to server
+  uploadSnapshot(base64Img);
+}
+
 
 socket.on("offer", async ({ from, offer }) => {
   const pc = new RTCPeerConnection(ICE_CONFIG);
@@ -406,5 +406,5 @@ if (!isViewer) {
   });
 
 
-  
+
 }

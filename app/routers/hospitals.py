@@ -32,21 +32,13 @@ def create_hospital(
     db_hospital = Hospital(**hospital.dict())
     db.add(db_hospital)
     db.flush()  # get db_hospital.id before commit
-
-    # 2) generate login_name for this hospital admin
-    #    example: prefix="APLH", id=2 -> "APLH002"
-    prefix = hospital.prefix or "MEDF"
-    login_name = f"{prefix}{db_hospital.id:03d}"
-
-    # 3) default common password
-    default_password = "Medfly2025"
-
+    
     # ensure login_name unique
-    existing_login = db.query(User).filter(User.login_name == login_name).first()
+    existing_login = db.query(User).filter(User.login_name == db_hospital.login_name).first()
     if existing_login:
         raise HTTPException(
             status_code=400,
-            detail=f"Login name {login_name} already exists",
+            detail=f"Login name {db_hospital.login_name} already exists",
         )
 
     # ensure mobile unique (as before)
@@ -62,13 +54,15 @@ def create_hospital(
     new_user = User(
         fullname=hospital.owner_name or hospital.name,
         mobile=hospital.mobile,
-        login_name=login_name,                          # ✅ login ID like APLH002
+        login_name=db_hospital.login_name,                          # ✅ login ID like APLH002
         role_name="hospital_admin",
         is_sadmin=False,
         is_hadmin=True,
         hspId=str(db_hospital.id),
-        show_pwd=hash_password(default_password),
+        show_pwd=db_hospital.login_password,
+        hashed_password=hash_password(db_hospital.login_password),
         is_active=True,
+        active =True
     )
     db.add(new_user)
 
